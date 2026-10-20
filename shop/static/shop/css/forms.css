@@ -1,0 +1,9 @@
+label { display: grid; gap: 8px; color: var(--text); font-weight: 700; }
+input, select { width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: 12px; background: white; padding: 0 13px; color: var(--text); transition: border .18s ease, box-shadow .18s ease; }
+input:focus, select:focus { outline: 0; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37,99,235,.12); }
+.auth-shell { min-height: 68vh; display: grid; grid-template-columns: .95fr 1.05fr; gap: 38px; align-items: center; padding: 54px 0; }
+.auth-copy h1 { font-size: clamp(2.4rem, 5vw, 4.6rem); line-height: 1; margin: 8px 0; }
+.auth-card, .summary-card, .profile-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; box-shadow: var(--shadow); }
+.auth-card { display: grid; gap: 16px; }
+.auth-card ul, .errorlist { margin: 0; padding-left: 18px; color: var(--danger); font-weight: 600; }
+.filter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

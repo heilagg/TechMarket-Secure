@@ -1,0 +1,20 @@
+<div class="wheel-overlay" data-wheel-modal>
+    <section class="wheel-modal" aria-labelledby="wheel-title">
+        <button class="modal-close" type="button" aria-label="Close reward wheel" data-wheel-dismiss>×</button>
+        <p class="eyebrow">Welcome reward</p>
+        <h2 id="wheel-title">Spin once for your TechMarket bonus</h2>
+        <div class="wheel-stage">
+            <div class="wheel-pointer"></div>
+            <div class="wheel" data-wheel>
+                <span style="--angle:30deg; --counter-angle:-30deg">10% Coupon</span>
+                <span style="--angle:90deg; --counter-angle:-90deg">Free iPhone</span>
+                <span style="--angle:150deg; --counter-angle:-150deg">Free Shipping</span>
+                <span style="--angle:210deg; --counter-angle:-210deg">Nothing</span>
+                <span style="--angle:270deg; --counter-angle:-270deg">10% Coupon</span>
+                <span style="--angle:330deg; --counter-angle:-330deg">Free Shipping</span>
+            </div>
+        </div>
+        <button class="button button-wide" type="button" data-wheel-spin data-spin-url="{% url 'spin_lucky_wheel' %}">Spin</button>
+        <p class="wheel-result" data-wheel-result></p>
+    </section>
+</div>

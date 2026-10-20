@@ -1,0 +1,12 @@
+{% extends 'shop/base.html' %}
+{% block title %}Orders | TechMarket{% endblock %}
+{% block content %}
+<section class="page-hero container"><span class="eyebrow">Orders</span><h1>Your purchase history.</h1></section>
+<section class="container profile-card">
+    {% for order in orders %}
+    <div class="order-row"><span>#{{ order.id }} · {{ order.phone.brand.name }} {{ order.phone.name }} × {{ order.quantity }}</span><strong>{{ order.get_status_display }}</strong><small>{{ order.created_at|date:'M d, Y H:i' }}</small></div>
+    {% empty %}
+    <div class="empty-state"><h2>No orders yet.</h2><p>Your future setup will appear here.</p><a class="button" href="{% url 'catalog' %}">Start shopping</a></div>
+    {% endfor %}
+</section>
+{% endblock %}

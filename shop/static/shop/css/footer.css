@@ -1,0 +1,9 @@
+.site-footer { margin-top: 64px; padding: 48px 0; background: #0B1220; color: #CBD5E1; }
+.footer-grid { display: grid; grid-template-columns: 1.5fr repeat(3, 1fr); gap: 34px; }
+.site-footer h3 { color: white; margin-top: 0; }
+.site-footer a, .site-footer span { display: block; margin: 8px 0; }
+.site-footer .brand-icon { background: white; color: var(--primary); }
+.site-footer .brand-mark { color: white; }
+.site-footer p { max-width: 360px; }
+.social-row { display: flex; gap: 10px; }
+.social-row span { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 999px; background: rgba(255,255,255,.1); color: white; font-weight: 800; }

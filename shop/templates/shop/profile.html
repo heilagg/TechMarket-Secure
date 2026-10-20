@@ -1,0 +1,25 @@
+{% extends 'shop/base.html' %}
+{% block title %}Profile | TechMarket{% endblock %}
+{% block content %}
+<section class="profile-layout container">
+    <aside class="profile-sidebar">
+        <div class="avatar">{{ user.username|first|upper }}</div>
+        <h1>{{ user.username }}</h1>
+        <p>{{ user.email|default:'No email set' }}</p>
+        <span>Joined {{ user.date_joined|date:'M d, Y' }}</span>
+        {% if profile.reward_type %}<div class="reward-badge">{{ profile.get_reward_type_display }} {% if profile.coupon_code %}· {{ profile.coupon_code }}{% endif %}</div>{% endif %}
+    </aside>
+    <div class="profile-main">
+        <form class="profile-card" method="post">
+            {% csrf_token %}
+            <h2>Edit profile</h2>
+            {% for field in form %}<label>{{ field.label }}{{ field }}{{ field.errors }}</label>{% endfor %}
+            <button class="button" type="submit">Save changes</button>
+        </form>
+        <section class="profile-card">
+            <div class="section-heading"><div><span class="eyebrow">Orders</span><h2>Recent activity</h2></div><a href="{% url 'orders' %}">All orders</a></div>
+            {% for order in orders %}<div class="order-row"><span>#{{ order.id }} {{ order.phone.brand.name }} {{ order.phone.name }}</span><strong>{{ order.get_status_display }}</strong></div>{% empty %}<div class="empty-state">No orders yet.</div>{% endfor %}
+        </section>
+    </div>
+</section>
+{% endblock %}

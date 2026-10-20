@@ -1,0 +1,16 @@
+{% extends 'shop/base.html' %}
+{% block title %}Categories | TechMarket{% endblock %}
+{% block content %}
+<section class="page-hero container"><span class="eyebrow">Categories</span><h1>Shop by department.</h1></section>
+<section class="section container">
+    <div class="category-grid large">
+        {% for category in categories %}
+        <a class="category-tile" href="{% url 'catalog' %}?category={{ category.id }}">
+            <span>{{ category.icon|default:'Tech' }}</span>
+            <strong>{{ category.name }}</strong>
+            <small>{{ category.description }}</small>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends 'shop/base.html' %}
+{% block title %}404 | TechMarket{% endblock %}
+{% block content %}
+<section class="not-found container">
+    <span class="eyebrow">404</span>
+    <h1>This page is out of stock.</h1>
+    <p>The link may be outdated, but the catalog is ready.</p>
+    <a class="button" href="{% url 'catalog' %}">Back to catalog</a>
+</section>
+{% endblock %}

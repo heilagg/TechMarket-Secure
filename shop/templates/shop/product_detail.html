@@ -1,0 +1,47 @@
+{% extends 'shop/base.html' %}
+{% load static %}
+{% block title %}{{ phone.brand.name }} {{ phone.name }} | TechMarket{% endblock %}
+{% block content %}
+<section class="product-detail container">
+    <div class="gallery">
+        <img src="{% static phone.display_image %}" alt="{{ phone.brand.name }} {{ phone.name }}">
+        <div class="thumb-row"><span></span><span></span><span></span></div>
+    </div>
+    <div class="detail-panel">
+        <nav class="breadcrumbs"><a href="{% url 'home' %}">Home</a><span>/</span><a href="{% url 'catalog' %}">Catalog</a><span>/</span><span>{{ phone.name }}</span></nav>
+        <span class="badge">{{ phone.category.name }}</span>
+        <h1>{{ phone.brand.name }} {{ phone.name }}</h1>
+        <p>{{ phone.description }}</p>
+        <div class="detail-rating">★ {{ phone.rating }} <span>{{ phone.stock_label }} · {{ phone.stock }} available</span></div>
+        <div class="detail-price"><strong>${{ phone.price }}</strong>{% if phone.old_price %}<del>${{ phone.old_price }}</del>{% endif %}</div>
+        {% if user.is_authenticated %}
+            <form class="buy-panel" method="post" action="{% url 'add_to_cart' phone.id %}">
+                {% csrf_token %}
+                <label>Quantity<input type="number" name="quantity" min="1" max="{{ phone.stock }}" value="1"></label>
+                <button class="button" type="submit">Add to cart</button>
+                <button class="button button-soft" type="submit" name="next" value="{% url 'checkout' %}">Buy now</button>
+            </form>
+        {% else %}
+            <div class="buy-panel guest-buy-panel">
+                <span>Sign in to add products to your cart.</span>
+                <a class="button" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">Login</a>
+                <a class="button button-soft" href="{% url 'register' %}">Register</a>
+            </div>
+        {% endif %}
+        <div class="spec-list">
+            <h2>Specifications</h2>
+            {% for spec in specs %}<div><span>{{ spec }}</span></div>{% empty %}<div><span>{{ phone.memory_gb }} GB memory</span></div>{% endfor %}
+        </div>
+    </div>
+</section>
+<section class="section container">
+    <div class="section-heading"><div><span class="eyebrow">Related</span><h2>Works in the same world</h2></div></div>
+    <div class="product-grid">{% for product in related_products %}{% include 'shop/partials/product_card.html' %}{% empty %}<div class="empty-state">No related products yet.</div>{% endfor %}</div>
+</section>
+{% if recently_viewed %}
+<section class="section container">
+    <div class="section-heading"><div><span class="eyebrow">Recently viewed</span><h2>Pick up where you left off</h2></div></div>
+    <div class="product-grid">{% for product in recently_viewed %}{% include 'shop/partials/product_card.html' %}{% endfor %}</div>
+</section>
+{% endif %}
+{% endblock %}

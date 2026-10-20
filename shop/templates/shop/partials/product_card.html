@@ -1,0 +1,31 @@
+{% load static %}
+<article class="product-card">
+    <a class="product-image" href="{% url 'product_detail' product.id %}">
+        <img src="{% static product.display_image %}" alt="{{ product.brand.name }} {{ product.name }}">
+    </a>
+    <div class="product-body">
+        <div class="product-meta">
+            <span>{{ product.brand.name }}</span>
+            <button class="favorite-button" type="button" aria-label="Add {{ product.name }} to wishlist">♡</button>
+        </div>
+        <h3><a href="{% url 'product_detail' product.id %}">{{ product.name }}</a></h3>
+        <p>{{ product.short_description|default:product.description|truncatechars:92 }}</p>
+        <div class="rating">★ {{ product.rating }} <span>{{ product.stock_label }}</span></div>
+        <div class="price-row">
+            <strong>${{ product.price }}</strong>
+            {% if product.old_price %}<del>${{ product.old_price }}</del>{% endif %}
+        </div>
+        <div class="card-actions">
+            <a class="button button-soft" href="{% url 'product_detail' product.id %}">View</a>
+            {% if user.is_authenticated %}
+                <form method="post" action="{% url 'add_to_cart' product.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button class="button" type="submit">Add</button>
+                </form>
+            {% else %}
+                <a class="button" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">Login</a>
+            {% endif %}
+        </div>
+    </div>
+</article>

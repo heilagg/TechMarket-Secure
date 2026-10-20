@@ -1,0 +1,80 @@
+{% extends 'shop/base.html' %}
+{% block title %}TechMarket | Premium Electronics{% endblock %}
+{% block content %}
+<section class="hero">
+    <div class="container hero-grid">
+        <div class="hero-copy">
+            <span class="eyebrow">Premium electronics store</span>
+            <h1>Devices that feel fast, polished, and ready for real life.</h1>
+            <p>Shop flagship phones, tablets, wearables, earbuds, and accessories from the brands people actually want.</p>
+            <div class="hero-actions">
+                <a class="button" href="{% url 'catalog' %}">Shop catalog</a>
+                <a class="button button-soft" href="{% url 'categories' %}">Browse categories</a>
+            </div>
+        </div>
+        <div class="hero-device" aria-hidden="true">
+            <div class="device-card main-device">iPhone 15 Pro</div>
+            <div class="device-card small-device">Galaxy S24 Ultra</div>
+        </div>
+    </div>
+</section>
+
+<section class="section container">
+    <div class="section-heading"><div><span class="eyebrow">Featured</span><h2>Best picks this week</h2></div><a href="{% url 'catalog' %}">View all</a></div>
+    <div class="product-grid">
+        {% for product in featured_products %}{% include 'shop/partials/product_card.html' %}{% empty %}<div class="empty-state">No featured products yet.</div>{% endfor %}
+    </div>
+</section>
+
+<section class="section section-band">
+    <div class="container">
+        <div class="section-heading"><div><span class="eyebrow">Categories</span><h2>Popular departments</h2></div></div>
+        <div class="category-grid">
+            {% for category in categories %}
+            <a class="category-tile" href="{% url 'catalog' %}?category={{ category.id }}">
+                <span>{{ category.icon|default:'Tech' }}</span>
+                <strong>{{ category.name }}</strong>
+                <small>{{ category.phones.count }} products</small>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section container split-showcase">
+    <div>
+        <div class="section-heading"><div><span class="eyebrow">New arrivals</span><h2>Fresh on TechMarket</h2></div></div>
+        <div class="compact-list">
+            {% for product in new_arrivals|slice:':4' %}
+                <a href="{% url 'product_detail' product.id %}"><span>{{ product.brand.name }} {{ product.name }}</span><strong>${{ product.price }}</strong></a>
+            {% endfor %}
+        </div>
+    </div>
+    <div>
+        <div class="section-heading"><div><span class="eyebrow">Best sellers</span><h2>Customer favorites</h2></div></div>
+        <div class="compact-list">
+            {% for product in best_sellers|slice:':4' %}
+                <a href="{% url 'product_detail' product.id %}"><span>{{ product.brand.name }} {{ product.name }}</span><strong>★ {{ product.rating }}</strong></a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section container">
+    <div class="brand-strip">
+        {% for brand in brands %}<span>{{ brand.name }}</span>{% endfor %}
+    </div>
+    <div class="advantages">
+        <div><strong>Fast delivery</strong><p>Same-day dispatch for in-stock products.</p></div>
+        <div><strong>Official selection</strong><p>Real devices from trusted global brands.</p></div>
+        <div><strong>Secure checkout</strong><p>Orders are tied to your Django account.</p></div>
+    </div>
+</section>
+
+<section class="newsletter">
+    <div class="container newsletter-inner">
+        <div><span class="eyebrow">Newsletter</span><h2>Deals without the noise.</h2></div>
+        <form><label class="sr-only" for="newsletter-email">Email</label><input id="newsletter-email" type="email" placeholder="you@example.com"><button class="button" type="submit">Subscribe</button></form>
+    </div>
+</section>
+{% endblock %}

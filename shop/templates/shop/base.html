@@ -1,0 +1,35 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}TechMarket{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'shop/css/variables.css' %}">
+    <link rel="stylesheet" href="{% static 'shop/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'shop/css/layout.css' %}">
+    <link rel="stylesheet" href="{% static 'shop/css/navbar.css' %}">
+    <link rel="stylesheet" href="{% static 'shop/css/footer.css' %}">
+    <link rel="stylesheet" href="{% static 'shop/css/cards.css' %}">
+    <link rel="stylesheet" href="{% static 'shop/css/buttons.css' %}">
+    <link rel="stylesheet" href="{% static 'shop/css/forms.css' %}">
+    <link rel="stylesheet" href="{% static 'shop/css/catalog.css' %}">
+    <link rel="stylesheet" href="{% static 'shop/css/profile.css' %}">
+    <link rel="stylesheet" href="{% static 'shop/css/responsive.css' %}">
+</head>
+<body>
+    {% include 'shop/partials/navbar.html' %}
+    {% include 'shop/partials/messages.html' %}
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    {% include 'shop/partials/footer.html' %}
+    {% if request.session.show_lucky_wheel and user.is_authenticated %}
+        {% include 'shop/partials/lucky_wheel.html' %}
+    {% endif %}
+    <script src="{% static 'shop/js/storefront.js' %}"></script>
+</body>
+</html>

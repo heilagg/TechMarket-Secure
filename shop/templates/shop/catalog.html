@@ -1,0 +1,27 @@
+{% extends 'shop/base.html' %}
+{% block title %}Catalog | TechMarket{% endblock %}
+{% block content %}
+<section class="page-hero container">
+    <span class="eyebrow">Catalog</span>
+    <h1>Find your next device.</h1>
+</section>
+<section class="catalog-shell container">
+    <aside class="filters">
+        <form method="get">
+            <label>Search<input name="q" type="search" value="{{ selected.q }}" placeholder="Model, brand, category"></label>
+            <label>Category<select name="category"><option value="">All categories</option>{% for category in categories %}<option value="{{ category.id }}" {% if selected.category == category.id|stringformat:'s' %}selected{% endif %}>{{ category.name }}</option>{% endfor %}</select></label>
+            <label>Brand<select name="brand"><option value="">All brands</option>{% for brand in brands %}<option value="{{ brand.id }}" {% if selected.brand == brand.id|stringformat:'s' %}selected{% endif %}>{{ brand.name }}</option>{% endfor %}</select></label>
+            <div class="filter-row"><label>Min price<input name="min_price" type="number" value="{{ selected.min_price }}" placeholder="{{ price_bounds.min_price|default:0 }}"></label><label>Max price<input name="max_price" type="number" value="{{ selected.max_price }}" placeholder="{{ price_bounds.max_price|default:0 }}"></label></div>
+            <label>Sort<select name="sort"><option value="newest" {% if selected.sort == 'newest' %}selected{% endif %}>Newest</option><option value="price_asc" {% if selected.sort == 'price_asc' %}selected{% endif %}>Price ascending</option><option value="price_desc" {% if selected.sort == 'price_desc' %}selected{% endif %}>Price descending</option><option value="alpha" {% if selected.sort == 'alpha' %}selected{% endif %}>Alphabetically</option><option value="rating" {% if selected.sort == 'rating' %}selected{% endif %}>Top rated</option></select></label>
+            <button class="button button-wide" type="submit">Apply filters</button>
+        </form>
+    </aside>
+    <div>
+        <div class="catalog-toolbar"><strong>{{ page_obj.paginator.count }} products</strong><span>Availability, ratings, and prices update from the database.</span></div>
+        <div class="product-grid">
+            {% for product in products %}{% include 'shop/partials/product_card.html' %}{% empty %}<div class="empty-state">Nothing found. Try a broader search.</div>{% endfor %}
+        </div>
+        {% include 'shop/partials/pagination.html' %}
+    </div>
+</section>
+{% endblock %}

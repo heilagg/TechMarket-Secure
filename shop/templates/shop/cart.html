@@ -1,0 +1,28 @@
+{% extends 'shop/base.html' %}
+{% block title %}Cart | TechMarket{% endblock %}
+{% block content %}
+<section class="page-hero container"><span class="eyebrow">Cart</span><h1>Your selected devices.</h1></section>
+<section class="cart-layout container">
+    <div class="cart-list">
+        {% for item in cart_items %}
+        <article class="cart-item">
+            <div><strong>{{ item.phone.brand.name }} {{ item.phone.name }}</strong><span>${{ item.phone.price }} each</span></div>
+            <form method="post" action="{% url 'update_cart' item.phone.id %}">
+                {% csrf_token %}
+                <input type="number" name="quantity" min="0" max="{{ item.phone.stock }}" value="{{ item.quantity }}">
+                <button class="button button-soft" type="submit">Update</button>
+            </form>
+            <strong>${{ item.line_total }}</strong>
+        </article>
+        {% empty %}
+        <div class="empty-state"><h2>Your cart is empty.</h2><p>Explore the catalog and add something worth unboxing.</p><a class="button" href="{% url 'catalog' %}">Shop now</a></div>
+        {% endfor %}
+    </div>
+    <aside class="summary-card">
+        <h2>Order summary</h2>
+        <div><span>Subtotal</span><strong>${{ cart_total }}</strong></div>
+        <div><span>Delivery</span><strong>Calculated at checkout</strong></div>
+        <a class="button button-wide" href="{% url 'checkout' %}">Checkout</a>
+    </aside>
+</section>
+{% endblock %}

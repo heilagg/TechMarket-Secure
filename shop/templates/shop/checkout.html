@@ -1,0 +1,35 @@
+{% extends 'shop/base.html' %}
+{% block title %}Checkout | TechMarket{% endblock %}
+{% block content %}
+<section class="page-hero container"><span class="eyebrow">Checkout</span><h1>Confirm your order.</h1></section>
+<section class="checkout-layout container">
+    <div class="summary-card">
+        <h2>Shipping profile</h2>
+        <p>{{ user.username }} · {{ user.email|default:'Email not set' }}</p>
+        <p>Delivery is 10% of the cart subtotal. Enter your wheel promo code to activate a discount or free delivery.</p>
+        {% if profile.coupon_code %}
+            <div class="promo-hint">
+                <span>Your reward promo code</span>
+                <strong>{{ profile.coupon_code }}</strong>
+            </div>
+        {% endif %}
+    </div>
+    <form class="summary-card" method="post">
+        {% csrf_token %}
+        <h2>Order summary</h2>
+        {% for item in cart_items %}<div><span>{{ item.quantity }} × {{ item.phone.name }}</span><strong>${{ item.line_total }}</strong></div>{% endfor %}
+        <label class="promo-field">Promo code
+            <span>
+                <input name="promo_code" type="text" value="{{ promo_code }}" placeholder="TECH10-ABC123" data-promo-input>
+                <button class="button button-soft" type="submit" name="apply_promo" value="1">Apply</button>
+            </span>
+        </label>
+        {% if promo_message %}<p class="promo-message {% if applied_reward %}is-success{% endif %}">{{ promo_message }}</p>{% endif %}
+        <div><span>Subtotal</span><strong>${{ subtotal }}</strong></div>
+        <div><span>Delivery 10%</span><strong>{% if delivery == 0 %}Free{% else %}${{ delivery }}{% endif %}</strong></div>
+        {% if discount > 0 %}<div><span>Promo discount 10%</span><strong>-${{ discount }}</strong></div>{% endif %}
+        <div class="summary-total"><span>Total</span><strong>${{ grand_total }}</strong></div>
+        <button class="button button-wide" type="submit" name="place_order" value="1">Place order</button>
+    </form>
+</section>
+{% endblock %}

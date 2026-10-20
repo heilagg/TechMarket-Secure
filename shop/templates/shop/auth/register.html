@@ -1,0 +1,16 @@
+{% extends 'shop/base.html' %}
+{% block title %}Register | TechMarket{% endblock %}
+{% block content %}
+<section class="auth-shell container">
+    <div class="auth-copy"><span class="eyebrow">Join TechMarket</span><h1>Create an account and unlock a welcome spin.</h1></div>
+    <form class="auth-card" method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+            <label>{{ field.label }}{{ field }}{{ field.errors }}</label>
+        {% endfor %}
+        <button class="button button-wide" type="submit">Register</button>
+        <p>Already have an account? <a href="{% url 'login' %}">Login</a></p>
+    </form>
+</section>
+{% endblock %}
