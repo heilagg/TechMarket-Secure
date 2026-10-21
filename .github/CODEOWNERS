@@ -1,12 +1,10 @@
-# Every PR needs approval from a code owner (enforced by branch protection).
-# Replace the usernames with your teammates' real GitHub usernames.
-*                          @heilagg @STUDENT1_GITHUB @STUDENT2_GITHUB
-# Security-sensitive paths: the DevSecOps lead must review changes here
-/.github/                  @STUDENT2_GITHUB
-/.pre-commit-config.yaml   @STUDENT2_GITHUB
-/.gitleaks.toml            @STUDENT2_GITHUB
-/.gitleaksignore           @STUDENT2_GITHUB
-/semgrep-rules/            @STUDENT2_GITHUB
-/requirements.txt          @STUDENT2_GITHUB
-/infra/                    @STUDENT2_GITHUB
-/techmarket_project/settings.py  @STUDENT1_GITHUB @STUDENT2_GITHUB
+*                                @heilagg @sunriseparalellum @ayekaa06
+
+/.github/                        @sunriseparalellum @heilagg
+/.pre-commit-config.yaml         @sunriseparalellum @heilagg
+/.gitleaks.toml                  @sunriseparalellum @heilagg
+/.gitleaksignore                 @sunriseparalellum @heilagg
+/semgrep-rules/                  @sunriseparalellum @heilagg
+/requirements.txt                @sunriseparalellum @heilagg
+/infra/                          @sunriseparalellum @ayekaa06
+/techmarket_project/settings.py  @heilagg @sunriseparalellum
