@@ -1,0 +1,36 @@
+# Local security checks that run automatically on every `git commit`.
+# Install once:  pip install pre-commit  &&  pre-commit install
+# Run on all files:  pre-commit run --all-files
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: no-commit-to-branch          # forbid direct commits to main
+        args: ["--branch", "main"]
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.3
+    hooks:
+      - id: gitleaks                     # secret scanning (uses .gitleaks.toml)
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.9.4
+    hooks:
+      - id: bandit                       # Python SAST
+        args: ["-c", "pyproject.toml", "--severity-level", "medium"]
+        additional_dependencies: ["bandit[toml]"]
+
+  - repo: local
+    hooks:
+      - id: semgrep                      # custom TechMarket rules (Linux/macOS/WSL only)
+        name: semgrep (custom rules)
+        language: python
+        additional_dependencies: ["semgrep==1.181.0"]
+        entry: semgrep scan --config semgrep-rules/ --severity ERROR --error --metrics off --skip-unknown-extensions
+        types_or: [python, html]
+        exclude: ^semgrep-rules/

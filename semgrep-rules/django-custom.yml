@@ -1,0 +1,113 @@
+# Custom Semgrep rules for TechMarket (Django + DRF).
+# Run locally:  semgrep scan --config semgrep-rules/ .
+# Test rules:   semgrep --test semgrep-rules/
+rules:
+  - id: techmarket-hardcoded-secret-key
+    message: >-
+      SECRET_KEY is hardcoded. Read it from the environment / secrets manager
+      (DJANGO_SECRET_KEY) so it never ends up in git history.
+    severity: ERROR
+    languages: [python]
+    metadata: {cwe: "CWE-798: Use of Hard-coded Credentials", owasp: "A04:2025 Cryptographic Failures"}
+    pattern-either:
+      - pattern: SECRET_KEY = "..."
+      - pattern: SECRET_KEY = '...'
+
+  - id: techmarket-debug-true
+    message: DEBUG must not be hardcoded to True; read it from DJANGO_DEBUG (default False).
+    severity: ERROR
+    languages: [python]
+    metadata: {cwe: "CWE-489: Active Debug Code", owasp: "A02:2025 Security Misconfiguration"}
+    pattern: DEBUG = True
+
+  - id: techmarket-cors-allow-all
+    message: >-
+      CORS_ALLOW_ALL_ORIGINS=True lets any website call the API from a victim's
+      browser. Use an explicit CORS_ALLOWED_ORIGINS allow-list.
+    severity: ERROR
+    languages: [python]
+    metadata: {cwe: "CWE-942: Permissive Cross-domain Policy", owasp: "A02:2025 Security Misconfiguration"}
+    pattern: CORS_ALLOW_ALL_ORIGINS = True
+
+  - id: techmarket-insecure-random-for-codes
+    message: >-
+      `random` is predictable. Coupon codes, tokens and other secrets must be
+      generated with the `secrets` module (e.g. secrets.choice / secrets.token_urlsafe).
+    severity: WARNING
+    languages: [python]
+    metadata: {cwe: "CWE-338: Use of Cryptographically Weak PRNG", owasp: "A04:2025 Cryptographic Failures"}
+    pattern-either:
+      - pattern: random.choice(...)
+      - pattern: random.choices(...)
+      - pattern: random.randint(...)
+      - pattern: random.random()
+
+  - id: techmarket-csrf-exempt
+    message: "@csrf_exempt disables CSRF protection on a state-changing view. Justify it in review or remove it."
+    severity: WARNING
+    languages: [python]
+    metadata: {cwe: "CWE-352: Cross-Site Request Forgery", owasp: "A01:2025 Broken Access Control"}
+    pattern: |
+      @csrf_exempt
+      def $F(...): ...
+
+  - id: techmarket-drf-allowany
+    message: >-
+      View is public (AllowAny). Make sure this is intentional (e.g. login) and
+      that it is rate-limited.
+    severity: INFO
+    languages: [python]
+    metadata: {cwe: "CWE-862: Missing Authorization", owasp: "A01:2025 Broken Access Control"}
+    pattern-either:
+      - pattern: |
+          @permission_classes([AllowAny])
+          def $F(...): ...
+      - pattern: |
+          class $C(...):
+              ...
+              permission_classes = [AllowAny]
+              ...
+
+  - id: techmarket-order-idor
+    message: >-
+      Order is looked up by id only. Always scope it to the current user
+      (Order.objects.get(pk=..., user=request.user)) to prevent IDOR.
+    severity: ERROR
+    languages: [python]
+    metadata: {cwe: "CWE-639: Authorization Bypass Through User-Controlled Key", owasp: "A01:2025 Broken Access Control"}
+    paths: {exclude: ["tests.py", "test_*.py"]}
+    pattern-either:
+      - pattern: Order.objects.get(pk=$X)
+      - pattern: Order.objects.get(id=$X)
+      - pattern: get_object_or_404(Order, pk=$X)
+      - pattern: get_object_or_404(Order, id=$X)
+
+  - id: techmarket-raw-sql
+    message: Raw SQL with string formatting enables SQL injection. Use the ORM or parameterized queries.
+    severity: ERROR
+    languages: [python]
+    metadata: {cwe: "CWE-89: SQL Injection", owasp: "A05:2025 Injection"}
+    pattern-either:
+      - pattern: $M.objects.raw(f"...")
+      - pattern: $M.objects.raw("..." % ...)
+      - pattern: $M.objects.raw("...".format(...))
+      - pattern: $CUR.execute(f"...")
+      - pattern: $CUR.execute("..." % ...)
+      - pattern: $CUR.execute("...".format(...))
+
+  - id: techmarket-mark-safe
+    message: mark_safe() disables auto-escaping and can introduce XSS if the value contains user input.
+    severity: WARNING
+    languages: [python]
+    metadata: {cwe: "CWE-79: Cross-site Scripting", owasp: "A05:2025 Injection"}
+    pattern: mark_safe(...)
+
+  - id: techmarket-template-safe-filter
+    message: The |safe filter / autoescape off disables XSS protection in templates.
+    severity: WARNING
+    languages: [generic]
+    paths: {include: ["*.html"]}
+    metadata: {cwe: "CWE-79: Cross-site Scripting", owasp: "A05:2025 Injection"}
+    pattern-either:
+      - pattern: "|safe"
+      - pattern: "{% autoescape off %}"

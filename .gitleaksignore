@@ -1,0 +1,4 @@
+# Rotated secrets accepted after review (see docs/DEVSECOPS.md#secret-rotation-log).
+# The old SECRET_KEY was invalidated on rotation; it is no longer used anywhere.
+707ee8c0309c1da9679926207dd583ccaf1573ec:techmarket_project/settings.py:django-insecure-key-literal:9
+707ee8c0309c1da9679926207dd583ccaf1573ec:techmarket_project/settings.py:django-secret-key:9
