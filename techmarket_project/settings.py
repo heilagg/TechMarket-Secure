@@ -4,6 +4,7 @@ Django settings for techmarket_project project.
 
 import os
 from pathlib import Path
+from datetime import timedelta
 
 from django.core.exceptions import ImproperlyConfigured
 
@@ -120,6 +121,24 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+
+
+
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.ScryptPasswordHasher",
+]
+
+
+
+
+
+
+
+
 # Internationalization
 
 LANGUAGE_CODE = 'en-us'
@@ -148,7 +167,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Django REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
@@ -158,6 +177,11 @@ REST_FRAMEWORK = {
 
 # CORS (django-cors-headers): explicit allow-list instead of "*" + credentials
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "http://localhost:8000")
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+}
 CORS_ALLOW_CREDENTIALS = True
 
 # Hardening that applies when DEBUG is off (checked by `manage.py check --deploy`)

@@ -46,6 +46,9 @@ class PhoneSerializer(serializers.ModelSerializer):
         ]
 
 
+MAX_ORDER_QUANTITY = 10
+
+
 class OrderSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     phone_name = serializers.CharField(source='phone.name', read_only=True)
@@ -56,4 +59,22 @@ class OrderSerializer(serializers.ModelSerializer):
             'id', 'user', 'username', 'phone', 'phone_name',
             'quantity', 'status', 'created_at',
         ]
-        read_only_fields = ['id', 'user', 'created_at']
+        # status is set by staff/the system, never by the customer
+        read_only_fields = ['id', 'user', 'status', 'created_at']
+
+    def validate_quantity(self, value):
+        if value < 1 or value > MAX_ORDER_QUANTITY:
+            raise serializers.ValidationError(f'Quantity must be between 1 and {MAX_ORDER_QUANTITY}.')
+        return value
+
+    def validate(self, attrs):
+        if self.instance is not None:
+            if self.instance.status != 'pending':
+                raise serializers.ValidationError('Only pending orders can be modified.')
+            if 'phone' in attrs and attrs['phone'] != self.instance.phone:
+                raise serializers.ValidationError({'phone': 'The product of an order cannot be changed.'})
+        phone = attrs.get('phone') or (self.instance.phone if self.instance else None)
+        quantity = attrs.get('quantity', self.instance.quantity if self.instance else 1)
+        if phone is not None and (not phone.in_stock or quantity > phone.stock):
+            raise serializers.ValidationError('Not enough stock for this product.')
+        return attrs
