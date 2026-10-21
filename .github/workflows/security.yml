@@ -96,6 +96,8 @@ jobs:
       - name: Audit pinned dependencies (gate - fail on any known vulnerability)
         run: |
           pip-audit -r requirements.txt --format markdown --output pip-audit.md || true
+          # pip-audit writes no report file when nothing is found
+          [ -s pip-audit.md ] || echo "pip-audit: no known vulnerabilities found" > pip-audit.md
           cat pip-audit.md >> "$GITHUB_STEP_SUMMARY"
           pip-audit -r requirements.txt --strict --desc
       - uses: actions/upload-artifact@v4
