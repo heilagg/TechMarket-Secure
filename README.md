@@ -5,8 +5,8 @@ TechMarket is a full-stack e-commerce web application for browsing and purchasin
 Users can browse phones by brand and category, view detailed product pages, register/login, place orders, and manage their profile. The project demonstrates full CRUD operations, token-based authentication, and REST API integration with CORS support.
 
 ## Team Members
-- Gabdrakhman Amina
-- Alikul Raniya
+- Bolegenova Ayaulym
+- Karatayeva Ayazhan
 - Amirzhan Malika
 
 ## Tech Stack
