@@ -5,3 +5,15 @@ __pycache__/
 *.pyc
 db.sqlite3
 .env
+
+# secrets & local env
+.env
+*.env
+!.env.example
+*.pem
+*.key
+venv/
+.venv/
+__pycache__/
+*.sqlite3
+reports/

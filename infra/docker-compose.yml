@@ -1,0 +1,48 @@
+# Local infrastructure for TechMarket: Keycloak (identity provider) + its PostgreSQL.
+# Start:  cd infra && cp .env.example .env && (edit passwords) && docker compose up -d
+# Keycloak admin console: http://localhost:8080  (realm "techmarket" is imported on first start)
+name: techmarket
+
+services:
+  keycloak-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KC_DB_PASSWORD:?set KC_DB_PASSWORD in infra/.env}
+    volumes:
+      - keycloak-db:/var/lib/postgresql/data
+    networks: [backend]                 # not published to the host
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4
+    command: ["start-dev", "--import-realm"]
+    restart: unless-stopped
+    depends_on:
+      keycloak-db: {condition: service_healthy}
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN_USER:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:?set KC_ADMIN_PASSWORD in infra/.env}
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      TECHMARKET_CLIENT_SECRET: ${TECHMARKET_CLIENT_SECRET:?set TECHMARKET_CLIENT_SECRET in infra/.env}
+    ports:
+      - "127.0.0.1:8080:8080"           # bind to localhost only
+    volumes:
+      - ./keycloak/techmarket-realm.json:/opt/keycloak/data/import/techmarket-realm.json:ro
+    networks: [backend]
+
+volumes:
+  keycloak-db:
+
+networks:
+  backend:

@@ -1,0 +1,161 @@
+# TechMarket DevSecOps pipeline: runs on every pull request and every push to main.
+# Each job is a security gate; "security-gate" is the single required status check.
+name: security-pipeline
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  GITLEAKS_VERSION: "8.24.3"
+
+jobs:
+  secrets-scan:
+    name: Secrets scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0              # scan the full git history, not only the last commit
+      - name: Install gitleaks
+        run: |
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar xz gitleaks
+          sudo mv gitleaks /usr/local/bin/
+      - name: Scan history
+        run: gitleaks git . --config .gitleaks.toml --redact --verbose --report-format sarif --report-path gitleaks.sarif
+      - name: Upload results to GitHub Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true       # code scanning upload needs a public repo or GitHub Advanced Security
+        with:
+          sarif_file: gitleaks.sarif
+          category: gitleaks
+
+  sast:
+    name: SAST (Bandit + Semgrep)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install scanners
+        run: pip install "bandit[toml,sarif]==1.9.4" "semgrep==1.181.0"
+      - name: Bandit (gate - fail on medium+ severity and confidence)
+        run: |
+          bandit -c pyproject.toml -r . -f sarif -o bandit.sarif --exit-zero
+          bandit -c pyproject.toml -r . --severity-level medium --confidence-level medium
+      - name: Semgrep custom rules self-test
+        run: semgrep --test semgrep-rules/ --metrics off
+      - name: Semgrep (report - community + custom rules)
+        run: >
+          semgrep scan --metrics off --sarif --output semgrep.sarif
+          --config p/django --config p/python --config p/owasp-top-ten --config p/secrets
+          --config semgrep-rules/ --exclude semgrep-rules
+      - name: Semgrep (gate - fail on ERROR severity)
+        run: >
+          semgrep scan --metrics off --error --severity ERROR
+          --config p/django --config p/python --config semgrep-rules/ --exclude semgrep-rules
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
+        with:
+          sarif_file: .
+          category: sast
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sast-reports
+          path: "*.sarif"
+
+  sca:
+    name: SCA (pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install pip-audit
+        run: pip install "pip-audit==2.10.1"
+      - name: Audit pinned dependencies (gate - fail on any known vulnerability)
+        run: |
+          pip-audit -r requirements.txt --format markdown --output pip-audit.md || true
+          # pip-audit writes no report file when nothing is found
+          [ -s pip-audit.md ] || echo "pip-audit: no known vulnerabilities found" > pip-audit.md
+          cat pip-audit.md >> "$GITHUB_STEP_SUMMARY"
+          pip-audit -r requirements.txt --strict --desc
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sca-report
+          path: pip-audit.md
+
+  dependency-review:
+    name: Dependency review (new deps in PR)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        continue-on-error: true       # requires the dependency graph to be enabled in repo settings
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure
+
+  tests:
+    name: Tests + Django deploy checks
+    runs-on: ubuntu-latest
+    env:
+      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY_CI }}
+      DJANGO_DEBUG: "False"
+      DJANGO_SECURE_SSL_REDIRECT: "False"   # test client uses plain HTTP
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Fallback CI key when the repository secret is not set (e.g. PRs from forks)
+        if: env.DJANGO_SECRET_KEY == ''
+        run: echo "DJANGO_SECRET_KEY=$(python -c 'import secrets; print(secrets.token_urlsafe(50))')" >> "$GITHUB_ENV"
+      - name: Missing migrations check
+        run: python manage.py makemigrations --check --dry-run
+      - name: Django system checks for production settings
+        run: python manage.py check --deploy --fail-level WARNING
+        env:
+          DJANGO_SECURE_SSL_REDIRECT: "True"
+      - name: Unit and security regression tests
+        run: python manage.py test --verbosity 2
+
+  security-gate:
+    name: security-gate
+    if: always()
+    needs: [secrets-scan, sast, sca, tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: All security gates must pass
+        run: |
+          echo "secrets-scan=${{ needs.secrets-scan.result }} sast=${{ needs.sast.result }} sca=${{ needs.sca.result }} tests=${{ needs.tests.result }}"
+          [ "${{ needs.secrets-scan.result }}" = success ] && [ "${{ needs.sast.result }}" = success ] \
+            && [ "${{ needs.sca.result }}" = success ] && [ "${{ needs.tests.result }}" = success ]

@@ -2,16 +2,46 @@
 Django settings for techmarket_project project.
 """
 
+import os
 from pathlib import Path
 from datetime import timedelta
 
+from django.core.exceptions import ImproperlyConfigured
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-t3l#!w!m9!r&j83wo51b@5bjgek4k=_b6#5ld^c)s!22(3x(3y'
 
-DEBUG = True
 
-ALLOWED_HOSTS = []
+def _load_dotenv(path):
+    if not path.exists():
+        return
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+_load_dotenv(BASE_DIR / ".env")
+
+def env(name, default=None, required=False):
+    """Read configuration from environment variables (never from source code)."""
+    value = os.environ.get(name, default)
+    if required and not value:
+        raise ImproperlyConfigured(f"Environment variable {name} is required")
+    return value
+
+
+def env_list(name, default=""):
+    return [item.strip() for item in env(name, default).split(",") if item.strip()]
+
+
+# Secure defaults: DEBUG is off unless explicitly enabled, and the app refuses
+# to start without a SECRET_KEY instead of falling back to a hardcoded one.
+DEBUG = env("DJANGO_DEBUG", "False").lower() == "true"
+SECRET_KEY = env("DJANGO_SECRET_KEY", required=True)
+ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost")
 
 
 # Application definition
@@ -145,20 +175,24 @@ REST_FRAMEWORK = {
     ],
 }
 
-
-
-
+# CORS (django-cors-headers): explicit allow-list instead of "*" + credentials
+CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "http://localhost:8000")
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
-
-
-
-
-
-
-# CORS (django-cors-headers)
-CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+
+# Hardening that applies when DEBUG is off (checked by `manage.py check --deploy`)
+if not DEBUG:
+    SECURE_SSL_REDIRECT = env("DJANGO_SECURE_SSL_REDIRECT", "True").lower() == "true"
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_HTTPONLY = True
+X_FRAME_OPTIONS = "DENY"

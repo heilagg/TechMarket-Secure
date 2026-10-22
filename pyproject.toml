@@ -1,0 +1,2 @@
+[tool.bandit]
+exclude_dirs = ["venv", ".venv", "semgrep-rules", "shop/tests.py", "shop/migrations"]
