@@ -115,7 +115,7 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/dependency-review-action@v4
+      - uses: actions/dependency-review-action@v5
         continue-on-error: true       # requires the dependency graph to be enabled in repo settings
         with:
           fail-on-severity: high
