@@ -109,3 +109,13 @@ class OrderApiSecurityTests(TestCase):
             "/api/orders/", {"phone": self.phone.id, "quantity": self.phone.stock + 1}, format="json"
         )
         self.assertEqual(response.status_code, 400)
+    def test_user_cannot_cancel_someone_elses_order(self):
+        self.auth(self.bob)
+        response = self.client.post(f"/api/orders/{self.alice_order.id}/cancel/")
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(Order.objects.filter(pk=self.alice_order.pk).exists())
+
+    def test_owner_can_cancel_pending_order(self):
+        self.auth(self.alice)
+        response = self.client.post(f"/api/orders/{self.alice_order.id}/cancel/")
+        self.assertEqual(response.status_code, 204)
