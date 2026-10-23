@@ -459,3 +459,11 @@ class OrderDetailView(APIView):
         order = self.get_object(pk, request.user)
         order.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def cancel_order(request, pk):
+    order = get_object_or_404(Order, pk=pk)          # BUG: any user can cancel any order
+    if order.status != 'pending':
+        return Response({'error': 'Only pending orders can be cancelled.'}, status=400)
+    order.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
