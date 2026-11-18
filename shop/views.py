@@ -1,4 +1,4 @@
-import random
+import secrets
 import string
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -46,7 +46,7 @@ def _money(value):
 
 
 def _generate_coupon(prefix):
-    return prefix + '-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    return prefix + '-' + ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(6))
 
 
 def _checkout_totals(request, subtotal):
@@ -304,7 +304,7 @@ def spin_lucky_wheel(request):
         return JsonResponse({'ok': False, 'message': 'Reward already claimed.'}, status=400)
 
     # Only these two rewards are selectable. Free iPhone and Nothing are visual-only wheel segments.
-    reward = random.choices(['discount', 'shipping'], weights=[65, 35], k=1)[0]
+    reward = secrets.SystemRandom().choices(['discount', 'shipping'], weights=[65, 35], k=1)[0]
     profile_obj.wheel_used = True
     if reward == 'discount':
         code = _generate_coupon('TECH10')
