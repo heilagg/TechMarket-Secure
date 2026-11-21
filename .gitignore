@@ -10,6 +10,7 @@ db.sqlite3
 .env
 *.env
 !.env.example
+!*.enc.env
 *.pem
 *.key
 venv/
@@ -17,3 +18,11 @@ venv/
 __pycache__/
 *.sqlite3
 reports/
+
+# SOPS / age private keys
+*.agekey
+keys.txt
+
+# Vault lab: AppRole credentials and secrets rendered by Vault Agent
+infra/vault/approle/
+infra/vault/rendered/

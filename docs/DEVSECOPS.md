@@ -43,6 +43,7 @@ Reports: GitHub → Security → Code scanning (SARIF), and workflow artifacts.
 * The app refuses to start without `DJANGO_SECRET_KEY`; `DEBUG` defaults to `False`.
 * CI secrets are stored in GitHub → Settings → Secrets and variables → Actions (`DJANGO_SECRET_KEY_CI`).
 * Infra secrets (Keycloak admin, DB, client secret) live in `infra/.env` (git-ignored).
+* Encrypted secrets in Git (SOPS + age) and the HashiCorp Vault setup: see [SECRETS.md](SECRETS.md).
 
 ### Secret rotation log
 | Date | Secret | Reason | Action |

@@ -41,6 +41,11 @@ jobs:
         with:
           sarif_file: gitleaks.sarif
           category: gitleaks
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: secrets-scan-report
+          path: gitleaks.sarif
 
   sast:
     name: SAST (Bandit + Semgrep)

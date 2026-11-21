@@ -1,0 +1,18 @@
+# SOPS creation rules: which age PUBLIC keys can decrypt which file.
+# Public keys are safe to commit. Private keys never leave their owner
+# (laptop: ~/.config/sops/age/keys.txt, CI: GitHub secret SOPS_AGE_KEY).
+#
+# Least privilege per file:
+#   app.enc.env   - Django secrets      -> developers + CI
+#   infra.enc.env - Keycloak/DB secrets -> developers only (CI does not need them)
+#
+# To add a teammate: add their public key here, then run
+#   sops updatekeys secrets/app.enc.env secrets/infra.enc.env
+creation_rules:
+  - path_regex: secrets/app\.enc\.env$
+    age: >-
+      age1gg750u2ugtrt7469rweftl7r3tnkqxn8mclak5vw2gjrjueutv6ss4putn,
+      age1vcn5ug25hvdfct34kuf29p589vvypppmt8ujvk69s5ghugdeuvksa58lef
+  - path_regex: secrets/infra\.enc\.env$
+    age: >-
+      age1gg750u2ugtrt7469rweftl7r3tnkqxn8mclak5vw2gjrjueutv6ss4putn
