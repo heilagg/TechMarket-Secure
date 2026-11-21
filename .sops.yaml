@@ -11,8 +11,8 @@
 creation_rules:
   - path_regex: secrets/app\.enc\.env$
     age: >-
-      age1REPLACE_WITH_MALIKA_PUBLIC_KEY,
-      age1REPLACE_WITH_CI_PUBLIC_KEY
+      age1gg750u2ugtrt7469rweftl7r3tnkqxn8mclak5vw2gjrjueutv6ss4putn,
+      age1vcn5ug25hvdfct34kuf29p589vvypppmt8ujvk69s5ghugdeuvksa58lef
   - path_regex: secrets/infra\.enc\.env$
     age: >-
-      age1REPLACE_WITH_MALIKA_PUBLIC_KEY
+      age1gg750u2ugtrt7469rweftl7r3tnkqxn8mclak5vw2gjrjueutv6ss4putn
