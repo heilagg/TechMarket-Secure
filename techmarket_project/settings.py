@@ -3,6 +3,8 @@ Django settings for techmarket_project project.
 """
 
 import os
+import stat
+import warnings
 from pathlib import Path
 from datetime import timedelta
 
@@ -20,7 +22,10 @@ def _load_dotenv(path):
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
-        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+        key = key.strip()
+        if f"{key}_FILE" in os.environ:
+            continue  # the secret is provisioned as a file (e.g. by Vault Agent); .env must not override it
+        os.environ.setdefault(key, value.strip().strip('"').strip("'"))
 
 
 _load_dotenv(BASE_DIR / ".env")
@@ -33,6 +38,31 @@ def env(name, default=None, required=False):
     return value
 
 
+def secret(name, required=False):
+    """Read a secret from a file (NAME_FILE) or from an environment variable (NAME).
+
+    File provisioning is preferred: the value never appears in the process environment,
+    so it cannot leak through /proc/<pid>/environ, crash dumps or child processes.
+    """
+    file_path = os.environ.get(f"{name}_FILE")
+    if file_path and os.environ.get(name):
+        raise ImproperlyConfigured(f"Set either {name} or {name}_FILE, not both")
+    if file_path:
+        path = Path(file_path)
+        try:
+            value = path.read_text(encoding="utf-8").strip()
+            mode = path.stat().st_mode
+        except OSError as exc:
+            raise ImproperlyConfigured(f"Cannot read secret file {name}_FILE") from exc
+        if os.name == "posix" and mode & (stat.S_IRWXG | stat.S_IRWXO):
+            warnings.warn(f"{name}_FILE is readable by group/others, use chmod 600", stacklevel=2)
+    else:
+        value = os.environ.get(name)
+    if required and not value:
+        raise ImproperlyConfigured(f"Secret {name} (or {name}_FILE) is required")
+    return value
+
+
 def env_list(name, default=""):
     return [item.strip() for item in env(name, default).split(",") if item.strip()]
 
@@ -40,7 +70,7 @@ def env_list(name, default=""):
 # Secure defaults: DEBUG is off unless explicitly enabled, and the app refuses
 # to start without a SECRET_KEY instead of falling back to a hardcoded one.
 DEBUG = env("DJANGO_DEBUG", "False").lower() == "true"
-SECRET_KEY = env("DJANGO_SECRET_KEY", required=True)
+SECRET_KEY = secret("DJANGO_SECRET_KEY", required=True)
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost")
 
 
@@ -179,6 +209,9 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "http://localhost:8000")
 
 SIMPLE_JWT = {
+    # Separate key for JWTs, so rotating one key does not silently break the other.
+    # Falls back to SECRET_KEY when JWT_SIGNING_KEY is not provisioned.
+    "SIGNING_KEY": secret("JWT_SIGNING_KEY") or SECRET_KEY,
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }

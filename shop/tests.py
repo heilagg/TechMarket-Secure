@@ -1,12 +1,19 @@
 """Security regression tests. They run in CI on every pull request."""
+import os
+import tempfile
 from datetime import timedelta
+from pathlib import Path
+from unittest import mock
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.core.exceptions import ImproperlyConfigured
+from django.test import SimpleTestCase, TestCase
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from techmarket_project.settings import secret
 
 from .models import Brand, Category, Order, Phone
 
@@ -109,3 +116,46 @@ class OrderApiSecurityTests(TestCase):
             "/api/orders/", {"phone": self.phone.id, "quantity": self.phone.stock + 1}, format="json"
         )
         self.assertEqual(response.status_code, 400)
+
+
+class SecretProvisioningTests(SimpleTestCase):
+    """Secrets can come from NAME_FILE (file provisioning) or NAME (env provisioning)."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.path = Path(self.tmp.name) / "demo_secret"
+        self.path.write_text("value-from-file\n", encoding="utf-8")
+        self.path.chmod(0o600)
+
+    def test_reads_secret_from_file(self):
+        with mock.patch.dict(os.environ, {"DEMO_SECRET_FILE": str(self.path)}, clear=False):
+            os.environ.pop("DEMO_SECRET", None)
+            self.assertEqual(secret("DEMO_SECRET"), "value-from-file")
+
+    def test_reads_secret_from_env(self):
+        with mock.patch.dict(os.environ, {"DEMO_SECRET": "value-from-env"}, clear=False):
+            os.environ.pop("DEMO_SECRET_FILE", None)
+            self.assertEqual(secret("DEMO_SECRET"), "value-from-env")
+
+    def test_both_sources_is_a_configuration_error(self):
+        env = {"DEMO_SECRET": "a", "DEMO_SECRET_FILE": str(self.path)}
+        with mock.patch.dict(os.environ, env, clear=False), self.assertRaises(ImproperlyConfigured):
+            secret("DEMO_SECRET")
+
+    def test_missing_required_secret_fails_closed(self):
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("DEMO_SECRET", None)
+            os.environ.pop("DEMO_SECRET_FILE", None)
+            with self.assertRaises(ImproperlyConfigured):
+                secret("DEMO_SECRET", required=True)
+
+    def test_world_readable_secret_file_warns(self):
+        self.path.chmod(0o644)
+        with mock.patch.dict(os.environ, {"DEMO_SECRET_FILE": str(self.path)}, clear=False):
+            os.environ.pop("DEMO_SECRET", None)
+            with self.assertWarns(UserWarning):
+                secret("DEMO_SECRET")
+
+    def test_jwt_signing_key_is_configured(self):
+        self.assertTrue(settings.SIMPLE_JWT["SIGNING_KEY"])

@@ -1,0 +1,43 @@
+# Lab 10 - centralized secret management: HashiCorp Vault + Vault Agent.
+# Run with:  infra/vault/bootstrap.sh   (not "docker compose up" directly)
+#
+# LAB SETUP ONLY: Vault runs in dev mode (in-memory storage, auto-unsealed, plain HTTP,
+# root token from .env). Production needs server mode with persistent storage, TLS,
+# init/unseal (or auto-unseal via KMS) and a revoked root token.
+name: techmarket-vault
+
+services:
+  vault:
+    image: hashicorp/vault:1.21.4
+    command: ["server", "-dev"]
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_DEV_ROOT_TOKEN:?set VAULT_DEV_ROOT_TOKEN in infra/vault/.env}
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+    cap_add: [IPC_LOCK]
+    ports:
+      - "127.0.0.1:8200:8200"            # localhost only
+    networks: [vault]
+    healthcheck:
+      test: ["CMD", "vault", "status", "-address=http://127.0.0.1:8200"]
+      interval: 2s
+      retries: 30
+
+  # Logs in with AppRole and renders secrets into files (file provisioning).
+  # The app never talks to Vault and never sees the Vault token.
+  vault-agent:
+    image: hashicorp/vault:1.21.4
+    command: ["agent", "-config=/vault/agent/agent.hcl"]
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"   # rendered files belong to the developer, mode 0600
+    environment:
+      SKIP_SETCAP: "true"
+      SKIP_CHOWN: "true"
+    depends_on:
+      vault: {condition: service_healthy}
+    volumes:
+      - ./agent/agent.hcl:/vault/agent/agent.hcl:ro
+      - ./approle:/vault/approle:ro      # role_id + secret_id (git-ignored)
+      - ./rendered:/vault/rendered       # output for Django (git-ignored)
+    networks: [vault]
+
+networks:
+  vault:

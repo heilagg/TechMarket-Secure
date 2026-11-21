@@ -28,4 +28,4 @@ Create and activate a Python virtual environment, then run pip install -r requir
 
 ## Documentation
 
-Threat model: docs/THREAT_MODEL.md. DevSecOps and developer guide: docs/DEVSECOPS.md.
+Threat model: docs/THREAT_MODEL.md. DevSecOps and developer guide: docs/DEVSECOPS.md. Secrets management (SOPS + age, HashiCorp Vault): docs/SECRETS.md.
